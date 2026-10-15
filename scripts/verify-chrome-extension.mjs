@@ -109,6 +109,7 @@ try {
     "mcp-package.json",
   );
   assert(pack.normalized_result.manifest.manifest_version === 3);
+  assert.equal(pack.authority, "shipped-artifact");
   check("MCP statically inspects fixture package and manifest");
   const contexts = await call(
     "list_chrome_extension_contexts",
@@ -240,6 +241,7 @@ try {
     "mcp-content-trace.json",
   );
   assert(!traceResponse.isError, JSON.stringify(traceResponse));
+  assert.equal(reportOf(traceResponse).authority, "external-service");
   const traced = reportOf(traceResponse).normalized_result;
   assert(traced.contexts.some((c) => c.origin === `chrome-extension://${id}`));
   assert(

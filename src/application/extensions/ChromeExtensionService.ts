@@ -135,6 +135,10 @@ export class ChromeExtensionService {
           parameters,
           result: report,
           confidence: "observed",
+          authority:
+            operation === "inspect_chrome_extension"
+              ? "shipped-artifact"
+              : "external-service",
           limitations: report.limitations,
         }),
       );
