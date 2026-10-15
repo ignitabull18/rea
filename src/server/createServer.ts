@@ -25,6 +25,8 @@ import type { GoBinaryService } from "../application/go/GoBinaryService.js";
 import { createElectronFuseService } from "../composition/electronFuses.js";
 import type { ElectronFuseService } from "../application/electron/ElectronFuseService.js";
 import { registerGoTools } from "./registerGoTools.js";
+import { registerChromeExtensionTools } from "./registerChromeExtensionTools.js";
+import { createChromeExtensionService } from "../composition/chromeExtension.js";
 import { createRustBinaryService } from "../composition/rust.js";
 import type { RustBinaryService } from "../application/rust/RustBinaryService.js";
 import { registerRustTools } from "./registerRustTools.js";
@@ -672,6 +674,13 @@ const registerConfiguredAnalysisTools = (
   registerPeResourcesTool(
     server,
     peResources,
+    toolLogger,
+    recordEvidence,
+    withAdmittedAnalysis,
+  );
+  registerChromeExtensionTools(
+    server,
+    createChromeExtensionService(),
     toolLogger,
     recordEvidence,
     withAdmittedAnalysis,

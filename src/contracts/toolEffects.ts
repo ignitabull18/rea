@@ -53,6 +53,13 @@ const sessionEvidence = effects({ mutatesSession: true });
 
 /** Explicit effect audit for every public tool. */
 export const TOOL_EFFECTS: Readonly<Record<string, ToolEffects>> = {
+  inspect_chrome_extension: evidence,
+  list_chrome_extension_contexts: browserEvidence,
+  inspect_chrome_extension_context: effects({
+    mutatesSession: true,
+    accessesNetwork: true,
+    idempotent: false,
+  }),
   list_cutter_sessions: effects({ accessesNetwork: true }),
   cutter_command: effects({
     mutatesTarget: true,

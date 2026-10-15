@@ -1,5 +1,7 @@
 /** Public browser, Electron, Inspector, and scenario operations. */
 export type BrowserObservationOperation =
+  | "list_chrome_extension_contexts"
+  | "inspect_chrome_extension_context"
   | "list_browser_targets"
   | "inspect_web_page"
   | "analyze_web_bundle"

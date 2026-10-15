@@ -1,4 +1,5 @@
 import { CAPTURE_TOOL_CONTRACTS } from "./captures/captureToolContracts.js";
+import { CHROME_EXTENSION_TOOL_CONTRACTS } from "./extensions/chromeExtensionToolContracts.js";
 import { SIGNAL_TOOL_CONTRACTS } from "./signals/signalToolContracts.js";
 import { WASM_TOOL_CONTRACTS } from "./wasm/wasmToolContracts.js";
 import { EVM_TOOL_CONTRACTS } from "./evm/evmToolContracts.js";
@@ -37,6 +38,7 @@ import { FRIDA_TOOL_CONTRACTS } from "./fridaToolContracts.js";
 
 /** Complete ordered public inventory used by registration and verification. */
 export const TOOL_CONTRACTS = [
+  ...CHROME_EXTENSION_TOOL_CONTRACTS,
   ...OFFICIAL_TOOL_CONTRACTS,
   ...ENHANCED_TOOL_CONTRACTS,
   ...NATIVE_TOOL_CONTRACTS,

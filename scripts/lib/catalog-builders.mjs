@@ -31,6 +31,9 @@ export const toolFamilyCatalog = (sources) => {
       surface: "artifact-provider",
       contracts: [
         ...sources.artifactContracts.ARTIFACT_TOOL_CONTRACTS,
+        ...sources.chromeExtensionContracts.CHROME_EXTENSION_TOOL_CONTRACTS.filter(
+          (contract) => contract.kind === "artifact-provider",
+        ),
         ...sources.evmContracts.EVM_TOOL_CONTRACTS,
         ...sources.goContracts.GO_TOOL_CONTRACTS,
         ...sources.rustContracts.RUST_TOOL_CONTRACTS,
@@ -93,6 +96,9 @@ export const toolFamilyCatalog = (sources) => {
       surface: "browser-provider",
       contracts: [
         ...sources.browserContracts.BROWSER_TOOL_CONTRACTS,
+        ...sources.chromeExtensionContracts.CHROME_EXTENSION_TOOL_CONTRACTS.filter(
+          (contract) => contract.kind === "browser-provider",
+        ),
         ...sources.webRuntimeContracts.WEB_RUNTIME_TOOL_CONTRACTS,
         ...sources.browserScenarioContracts.BROWSER_SCENARIO_TOOL_CONTRACTS,
         ...sources.webNetworkCaptureContracts
@@ -264,6 +270,12 @@ export const providerCatalog = (sources) => {
     {
       identity: sources.goProvider.GO_BINARY_PROVIDER_IDENTITY,
       contracts: sources.goContracts.GO_TOOL_CONTRACTS,
+    },
+    {
+      identity:
+        sources.chromeExtensionDomain.CHROME_EXTENSION_PROVIDER_IDENTITY,
+      contracts:
+        sources.chromeExtensionContracts.CHROME_EXTENSION_TOOL_CONTRACTS,
     },
     {
       identity: sources.rustProvider.RUST_BINARY_PROVIDER_IDENTITY,

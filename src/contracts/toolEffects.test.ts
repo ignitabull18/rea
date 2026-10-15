@@ -17,6 +17,11 @@ const EXECUTION_WORDING =
   /\b(?:run|runs|running|launch|launches|launching|execute|executes|executing|execution|start|starts|install|installs|uninstall|uninstalls)\b/iu;
 
 const EXECUTION_WORDING_EXCEPTIONS: Readonly<Record<string, string>> = {
+  inspect_chrome_extension:
+    "reads local package bytes without target execution or installation",
+  list_chrome_extension_contexts: "only discovers existing CDP targets",
+  inspect_chrome_extension_context:
+    "reads loaded source without evaluation or target launch",
   inspect_with_objdump:
     "runs a caller-selected inspection tool, not target code",
   start_gdb_session:

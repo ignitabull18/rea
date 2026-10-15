@@ -68,6 +68,9 @@ const SOURCE_PATHS = {
   sqliteDomain: "dist/domain/sqlite/sqliteDatabase.js",
   evmProvider: "dist/evm/EvmoleRelease.js",
   goContracts: "dist/contracts/go/goToolContracts.js",
+  chromeExtensionContracts:
+    "dist/contracts/extensions/chromeExtensionToolContracts.js",
+  chromeExtensionDomain: "dist/domain/extensions/chromeExtension.js",
   goProvider: "dist/go/GoBinaryProvider.js",
   rustContracts: "dist/contracts/rust/rustToolContracts.js",
   rustProvider: "dist/rust/RustBinaryProvider.js",

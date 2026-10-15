@@ -2,7 +2,7 @@
 name: reverse-engineer-anything
 description: Reverse engineer native, managed, Electron/JavaScript, packaged, firmware, and browser targets with REA. Use shipped-artifact or requested runtime evidence to explain features, compare versions, decompile code, or guide a reconstruction. Skip REA for ordinary source-repository architecture analysis.
 metadata:
-  version: "42"
+  version: "43"
 ---
 
 # REA
@@ -80,6 +80,14 @@ Configuration repair starts with a read-only setup plan; show paths, backups and
 skill replacement before applying authorized changes. Preserve existing approval
 and target-execution boundaries. REA setup never installs or upgrades unrelated
 software, including Node.js, npm, Homebrew, Java, Ghidra, IDA, JADX, Kuna, Binwalk or Unblob.
+
+## Chrome extensions in this local build
+
+For an unpacked directory, ZIP or CRX package, use `inspect_chrome_extension` with its absolute `path`. It returns manifest declarations, entrypoints, file digests and syntactic API references. CRX signatures are not verified; static references do not prove execution.
+
+For an already-running operator-owned extension, use `list_chrome_extension_contexts` with a loopback `cdp_endpoint` and exact `extension_id`, then `inspect_chrome_extension_context` with a discovered `target_id`. It snapshots loaded worker/page JavaScript without evaluating code; attachment can affect worker lifetime. Website content-script isolated worlds are outside coverage. Empty discovery does not prove extension absence.
+
+These tools belong to this local fork; follow actual advertised schemas. If absent from an active session, use the installed `rea` CLI or reconnect Codex.
 
 ## Route the target first
 
