@@ -4,7 +4,10 @@ import { AnalysisTimeoutError } from "../../domain/analysisErrorCore.js";
 import { BrowserObservationError } from "../../domain/browserObservationError.js";
 import type { BrowserObservationOperation } from "../../domain/browserObservationErrors.js";
 import { ProviderCleanupError } from "../../domain/providerCleanupError.js";
-import { sanitizeBrowserUrl } from "../../domain/browserObservation.js";
+import {
+  sanitizeBrowserUrl,
+  browserObservationEndpointSchema,
+} from "../../domain/browserObservation.js";
 import {
   WEB_RUNTIME_LIMITS,
   type webRuntimeTargetSchema,
@@ -12,11 +15,10 @@ import {
 import type { z } from "zod";
 import { authorizeCdpTarget } from "../CdpAuthorizedTarget.js";
 import { authorizedMainFrame } from "../CdpAuthorizedMainFrame.js";
+import type { CdpEndpointDiscovery } from "../CdpEndpoint.js";
 import {
-  discoverCdpEndpoint,
-  type CdpEndpointDiscovery,
-} from "../CdpEndpoint.js";
-import {
+  openCdpEndpoint,
+  attachCdpTargetSession,
   openCdpTargetSession,
   type CdpTargetSession,
 } from "../CdpTargetSession.js";
@@ -50,23 +52,31 @@ export class CdpRuntimeSession {
     options: ExecutionOptions,
   ): Promise<CdpRuntimeSession> {
     return runtimeDeadline(operation, options.signal, async (signal) => {
-      const discovery = await discoverCdpEndpoint(
-        input.cdp_endpoint,
+      const opened = await openCdpEndpoint(
+        browserObservationEndpointSchema.parse(input.cdp_endpoint),
         operation,
         signal,
       );
-      const { target, allowedOrigins } = authorizeCdpTarget(
-        discovery,
-        input,
-        operation,
-      );
-      const transport = await openCdpTargetSession(
-        discovery,
-        target,
-        operation,
-        signal,
-        { maxPayloadBytes: WEB_RUNTIME_LIMITS.protocolBytes },
-      );
+      const discovery = opened.discovery;
+      let authorized;
+      try {
+        authorized = authorizeCdpTarget(discovery, input, operation);
+      } catch (cause) {
+        await opened.connection?.close();
+        throw cause;
+      }
+      const { target, allowedOrigins } = authorized;
+      const transport =
+        opened.connection === undefined
+          ? await openCdpTargetSession(discovery, target, operation, signal, {
+              maxPayloadBytes: WEB_RUNTIME_LIMITS.protocolBytes,
+            })
+          : await attachCdpTargetSession(
+              opened.connection,
+              target,
+              operation,
+              signal,
+            );
       try {
         const tree = runtimeFrameTreeSchema.parse(
           await authorizedMainFrame({

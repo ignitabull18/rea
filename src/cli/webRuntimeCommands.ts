@@ -1,4 +1,5 @@
 import { Cli, z } from "incur";
+import { createWebApiCaptureService } from "../composition/webApiCapture.js";
 import { createWebRuntimeService } from "../composition/webRuntime.js";
 import { browserCliError } from "../cliBrowserContext.js";
 import {
@@ -23,6 +24,42 @@ export const registerWebRuntimeCommands = (
   cli: ReturnType<typeof Cli.create>,
   logger: Logger,
 ): void => {
+  cli.command(CLI_COMMANDS.observeWebApi, {
+    description:
+      "Capture API response values from an existing tab while browsing",
+    args: z.object({ endpoint: z.string(), targetId: z.string() }),
+    options: z.object({
+      ...browserScopeOptions,
+      observationMs: z.number().int().min(250).max(30000).default(5000),
+      urlContains: z.string().optional(),
+      includeRequestBody: z.boolean().default(false),
+      maxRequests: z.number().int().min(1).max(1000).default(100),
+      maxBodyBytes: z.number().int().min(1).max(2097152).default(262144),
+      maxTotalBodyBytes: z.number().int().min(1).max(8388608).default(2097152),
+      sensitiveValues: z.array(z.string()).default([]),
+    }),
+    run: ({ args, options }) =>
+      withCommandCancellation((signal) =>
+        logCliCommand(logger, CLI_COMMANDS.observeWebApi, async () => {
+          const result = await createWebApiCaptureService().observe(
+            {
+              cdp_endpoint: args.endpoint,
+              target_id: args.targetId,
+              allowed_origins: options.allowedOrigins,
+              observation_ms: options.observationMs,
+              url_contains: options.urlContains,
+              include_request_body: options.includeRequestBody,
+              max_requests: options.maxRequests,
+              max_body_bytes: options.maxBodyBytes,
+              max_total_body_bytes: options.maxTotalBodyBytes,
+              sensitive_values: options.sensitiveValues,
+            },
+            { signal, progress: runtimeProgress },
+          );
+          return result.ok ? result.value : browserCliError(result.error);
+        }),
+      ),
+  });
   cli.command(CLI_COMMANDS.observeWebExecution, {
     description:
       "Observe precise page execution; resets counters and temporarily disables optimization",

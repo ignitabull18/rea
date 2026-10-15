@@ -305,6 +305,7 @@
     "verify:web:qlog": "npm run build:cached && node scripts/verify-qlog-captures.mjs",
     "licenses:generate": "node scripts/generate-third-party-inventory.mjs",
     "licenses:check": "node scripts/generate-third-party-inventory.mjs --check",
+    "verify:web-api": "npm run build:cached && node scripts/verify-web-api.mjs",
     "verify:chrome-extension": "npm run build:cached && node scripts/verify-chrome-extension.mjs"
   },
   "lint-staged": {
@@ -395,5 +396,5 @@
   "allowScripts": {
     "frida@17.23.2": true
   },
-  "reaLocalBuild": "chrome-extensions.2"
+  "reaLocalBuild": "chrome-extensions.3"
 }

@@ -2,7 +2,7 @@
 name: reverse-engineer-anything
 description: Reverse engineer native, managed, Electron/JavaScript, packaged, firmware, and browser targets with REA. Use shipped-artifact or requested runtime evidence to explain features, compare versions, decompile code, or guide a reconstruction. Skip REA for ordinary source-repository architecture analysis.
 metadata:
-  version: "44"
+  version: "45"
 ---
 
 # REA
@@ -90,6 +90,12 @@ For an already-running operator-owned extension, use `list_chrome_extension_cont
 For live webpage interactions, call `trace_chrome_extension_content_script` with the exact webpage `target_id`, endpoint and extension ID. Choose `observation_ms` (250–30,000; default 5,000). Wait for armed progress, then trigger the action with separate browser controls. The tool observes main-frame isolated-world execution coverage, directly attributed request initiators, and concurrent DOM changes. DOM causality is unknown. MAIN-world injections, subframes and extension-worker traffic are outside coverage. Navigation/context loss fails closed; instrumentation can affect timing. No code is injected or evaluated by this tool.
 
 These tools belong to this local fork; follow actual advertised schemas. If absent from an active session, use the installed `rea` CLI or reconnect Codex.
+
+## Read API response data while browsing
+
+Use `observe_web_api` for actual Fetch/XHR response values in an already-open authenticated page. Select `cdp_endpoint`, exact webpage `target_id`, optional `allowed_origins`, literal `url_contains`, and `observation_ms` (250–30,000). Wait for armed progress, then interact with separate browser controls. It reads only exact completed CDP requests, with no refetch/replay, navigation, injection or request editing. Response bodies contain real values; optional request bodies use `include_request_body`. Headers and cookies are not retained; `sensitive_values` removes declared literal UTF-8 text. Observe explicit unavailable/unfinished/budget states; this does not recover data the page never received, earlier transactions, iframe or worker-only traffic. An Amazon browser response is browser-session evidence, not a claim of official API coverage.
+
+For automated page actions plus response bodies, use `capture_browser_scenario` with `capture.network.response_body: true`; preserve its Playwright body-provenance limitation. For existing HAR/SAZ/mitmproxy/qlog files, use `inspect_web_network_capture`.
 
 ## Route the target first
 

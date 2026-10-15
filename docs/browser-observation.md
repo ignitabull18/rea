@@ -8,7 +8,9 @@ exported script's native imports under an explicit URL/import-map context.
 
 REA can attach to a user-owned Chrome-family browser through the Chrome DevTools Protocol (CDP) and produce bounded Evidence about an existing page. This is a passive reverse-engineering capability, not a general browser automation or remote-control surface.
 
-For request/response bodies and traffic debugging, see
+For actual API response values while browsing an existing tab, use [passive API capture](web-api-capture.md).
+
+For saved request/response bodies and traffic debugging, see
 [Fiddler Everywhere captures and MCP](web-network-captures.md#reading-fiddler-captures-saz).
 Inspect native SAZ or HAR 1.2 offline with REA, or connect Everywhere's separate MCP server.
 

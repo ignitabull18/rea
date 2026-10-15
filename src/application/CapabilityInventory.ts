@@ -349,6 +349,7 @@ const workflowAvailabilityFor = ({
 }: AvailabilityContext): Availability | null => {
   if (
     name === "inspect_go_binary" ||
+    name === "observe_web_api" ||
     name === "trace_chrome_extension_content_script" ||
     name === "inspect_chrome_extension" ||
     name === "list_chrome_extension_contexts" ||

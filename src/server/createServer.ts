@@ -75,6 +75,8 @@ import { createWebSourceLocationService } from "../composition/webSourceLocation
 import { registerWebSourceLocationTool } from "./registerWebSourceLocationTool.js";
 import type { WebSourceLocationService } from "../application/WebSourceLocationService.js";
 import type { WebRuntimeService } from "../application/WebRuntimeService.js";
+import { createWebApiCaptureService } from "../composition/webApiCapture.js";
+import { registerWebApiCaptureTool } from "./registerWebApiCaptureTool.js";
 import { createWebRuntimeService } from "../composition/webRuntime.js";
 import { registerWebRuntimeTools } from "./registerWebRuntimeTools.js";
 import type { WebNetworkCaptureService } from "../application/WebNetworkCaptureService.js";
@@ -746,6 +748,13 @@ const registerConfiguredAnalysisTools = (
   registerWebSourceLocationTool(
     server,
     options.webSourceLocation ?? createWebSourceLocationService(environment),
+    toolLogger,
+    recordEvidence,
+    withAdmittedAnalysis,
+  );
+  registerWebApiCaptureTool(
+    server,
+    createWebApiCaptureService(),
     toolLogger,
     recordEvidence,
     withAdmittedAnalysis,

@@ -9,6 +9,7 @@ export const CLI_COMMANDS = Object.freeze({
   inspectSqliteDatabase: "inspect-sqlite-database",
   inspectEvmInterface: "inspect-evm-interface",
   inspectWebNetworkCapture: "inspect-web-network-capture",
+  observeWebApi: "observe-web-api",
   observeWebExecution: "observe-web-execution",
   inspectWebEventListeners: "inspect-web-event-listeners",
   traceWebSourceLocation: "trace-web-source-location",

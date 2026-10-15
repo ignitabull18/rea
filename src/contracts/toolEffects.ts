@@ -181,6 +181,11 @@ export const TOOL_EFFECTS: Readonly<Record<string, ToolEffects>> = {
     writesFilesystem: true,
     launchesProcess: true,
   }),
+  observe_web_api: effects({
+    mutatesSession: true,
+    accessesNetwork: true,
+    idempotent: false,
+  }),
   observe_web_execution: effects({
     mutatesTarget: true,
     mutatesSession: true,
