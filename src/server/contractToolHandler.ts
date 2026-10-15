@@ -8,6 +8,7 @@ import type { AnalysisError } from "../domain/analysisErrorBase.js";
 import type { Evidence } from "../domain/evidence.js";
 import type { Result } from "../domain/result.js";
 import type { EvidenceMcpServer } from "./EvidenceMcpServer.js";
+import { mcpProgressReporter } from "./mcpProgress.js";
 import { logToolExecution } from "./toolLogging.js";
 import type { WithAdmittedAnalysis } from "./analysisAdmission.js";
 import { runAdmittedToolOperation } from "./admittedToolOperation.js";
@@ -59,7 +60,10 @@ export const createEvidenceToolHandler =
     return async (input: unknown, context: ServerContext) => {
       const executeAndRecord = async () => {
         const result = await logToolExecution(logger, name, () =>
-          operation(input, { signal: context.mcpReq.signal }),
+          operation(input, {
+            signal: context.mcpReq.signal,
+            progress: mcpProgressReporter(context),
+          }),
         );
         if (!result.ok) {
           const partial = result.error.partialObservation;

@@ -31,6 +31,88 @@ export const inspectChromeExtensionContextInputSchema =
       .min(1)
       .describe("Exact target ID returned by list_chrome_extension_contexts."),
   });
+export const traceChromeExtensionContentScriptInputSchema =
+  listChromeExtensionContextsInputSchema.extend({
+    target_id: z
+      .string()
+      .min(1)
+      .describe("Exact HTTP(S) webpage target ID at this endpoint."),
+    observation_ms: z.number().int().min(250).max(30000).default(5000),
+  });
+export const extensionContentTraceSchema = z.strictObject({
+  cdp_endpoint: z.string(),
+  extension_id: z.string(),
+  target_id: z.string(),
+  page: z.strictObject({
+    url: z.string(),
+    frame_id: z.string(),
+    loader_id: z.string(),
+  }),
+  window: z.strictObject({
+    armed_at: z.string(),
+    ended_at: z.string(),
+    requested_ms: z.number(),
+    coverage_started_timestamp: z.number(),
+    coverage_ended_timestamp: z.number(),
+  }),
+  contexts: z.array(
+    z.strictObject({
+      id: z.number(),
+      unique_id: z.string(),
+      origin: z.string(),
+      frame_id: z.string(),
+    }),
+  ),
+  scripts: z.array(
+    z.strictObject({
+      script_id: z.string(),
+      execution_context_id: z.number(),
+      reported_url: z.string(),
+      sha256: z.string(),
+      source: z.string(),
+      functions: z.array(
+        z.strictObject({
+          name: z.string(),
+          is_block_coverage: z.boolean(),
+          ranges: z.array(
+            z.strictObject({
+              start_offset: z.number().int().nonnegative(),
+              end_offset: z.number().int().nonnegative(),
+              count: z.number().int().nonnegative(),
+            }),
+          ),
+        }),
+      ),
+    }),
+  ),
+  requests: z.array(
+    z.strictObject({
+      request_id: z.string(),
+      url: z.string(),
+      method: z.string(),
+      timestamp: z.number(),
+      initiator_script_id: z.string(),
+      line_number: z.number(),
+      column_number: z.number(),
+    }),
+  ),
+  dom_changes: z.array(
+    z.strictObject({
+      method: z.string(),
+      node_id: z.number().nullable(),
+      parent_node_id: z.number().nullable(),
+      attribute_name: z.string().nullable(),
+      node_name: z.string().nullable(),
+    }),
+  ),
+  excluded_script_count: z.number().int().nonnegative(),
+  unattributed_request_count: z.number().int().nonnegative(),
+  limitations: z.array(z.string()),
+});
+export type TraceChromeExtensionContentScriptInput = z.infer<
+  typeof traceChromeExtensionContentScriptInputSchema
+>;
+export type ExtensionContentTrace = z.infer<typeof extensionContentTraceSchema>;
 export const extensionApiReferenceSchema = z.strictObject({
   api: z.string(),
   line: z.number().int().positive(),

@@ -3,6 +3,8 @@ import type {
   ChromeExtensionReport,
   ExtensionContextList,
   ExtensionContextInspection,
+  TraceChromeExtensionContentScriptInput,
+  ExtensionContentTrace,
   InspectChromeExtensionInput,
   ListChromeExtensionContextsInput,
   InspectChromeExtensionContextInput,
@@ -10,6 +12,10 @@ import type {
 
 /** Package reads and exact-context snapshots; no code execution, installation or store downloads. */
 export interface ChromeExtensionPort {
+  traceContentScript(
+    input: TraceChromeExtensionContentScriptInput,
+    options?: ExecutionOptions,
+  ): Promise<ExtensionContentTrace>;
   inspectPackage(
     input: InspectChromeExtensionInput,
     options?: ExecutionOptions,

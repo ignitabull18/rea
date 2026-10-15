@@ -1,3 +1,4 @@
+import { createServer } from "node:http";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { readFile, writeFile, mkdtemp, rm, mkdir } from "node:fs/promises";
@@ -30,6 +31,7 @@ if (!executable)
   throw new Error(
     "Set REA_BROWSER_EXECUTABLE to an existing extension-capable Chromium or Chrome for Testing executable.",
   );
+let httpServer;
 let browser;
 let client;
 let transport;
@@ -89,9 +91,10 @@ try {
     "inspect_chrome_extension",
     "list_chrome_extension_contexts",
     "inspect_chrome_extension_context",
+    "trace_chrome_extension_content_script",
   ])
     assert(tools.tools.some((t) => t.name === name));
-  check("MCP advertises all three new extension tools");
+  check("MCP advertises all four extension tools");
   async function call(name, args, filename) {
     const r = await client.callTool({ name, arguments: args }, undefined, {
       timeout: 60000,
@@ -174,6 +177,183 @@ try {
   check(
     "Absent extension returns bounded empty discovery with dormant-context caveat",
   );
+  httpServer = createServer((req, res) => {
+    res.setHeader("Content-Type", "text/html");
+    res.end(
+      req.url.startsWith("/content-probe")
+        ? "probe-ok"
+        : '<button id="rea-content-action">Trace content action</button>',
+    );
+  });
+  await new Promise((resolve) => httpServer.listen(0, "127.0.0.1", resolve));
+  const webPage = await browser.newPage();
+  await webPage.goto(`http://127.0.0.1:${httpServer.address().port}/trace`);
+  await webPage.waitForFunction(
+    () => document.documentElement.dataset.reaExtensionFixture === "loaded",
+  );
+  // Deliberately spoof an extension URL in the page's MAIN world. It must never become extension-owned.
+  await webPage.evaluate((extensionId) => {
+    const script = document.createElement("script");
+    script.textContent = `window.reaPageSpoof = function reaPageSpoof() { return 42 };\n//# sourceURL=chrome-extension://${extensionId}/spoof.js`;
+    document.head.append(script);
+  }, id);
+  const targets = await (await fetch(`${endpoint}/json/list`)).json();
+  const webTarget = targets.find((t) => t.url === webPage.url());
+  assert(webTarget);
+  async function trace(extensionId, action, filename, duration = 1000) {
+    let actionPromise;
+    let armed = false;
+    const response = await client.callTool(
+      {
+        name: "trace_chrome_extension_content_script",
+        arguments: {
+          cdp_endpoint: endpoint,
+          extension_id: extensionId,
+          target_id: webTarget.id,
+          observation_ms: duration,
+        },
+      },
+      {
+        timeout: 60000,
+        onprogress: (progress) => {
+          if (progress.message?.includes("trace armed") && !armed) {
+            armed = true;
+            actionPromise = action();
+          }
+        },
+      },
+    );
+    await actionPromise;
+    await writeFile(join(out, filename), JSON.stringify(response, null, 2));
+    assert(armed, "trace must announce actual instrumentation arming");
+    return response;
+  }
+  const traceResponse = await trace(
+    id,
+    async () => {
+      await webPage.evaluate(() => window.reaPageSpoof());
+      await webPage.locator("#rea-content-action").click();
+      await webPage.waitForFunction(
+        () => document.documentElement.dataset.reaContentAction === "observed",
+      );
+    },
+    "mcp-content-trace.json",
+  );
+  assert(!traceResponse.isError, JSON.stringify(traceResponse));
+  const traced = reportOf(traceResponse).normalized_result;
+  assert(traced.contexts.some((c) => c.origin === `chrome-extension://${id}`));
+  assert(
+    traced.scripts.some((s) =>
+      s.functions.some(
+        (f) =>
+          f.name === "reaContentAction" && f.ranges.some((r) => r.count > 0),
+      ),
+    ),
+  );
+  assert(!traced.scripts.some((s) => s.reported_url.includes("spoof.js")));
+  assert(
+    traced.requests.some(
+      (r) =>
+        r.url.endsWith("/content-probe?fixture=retained") &&
+        traced.scripts.some((s) => s.script_id === r.initiator_script_id),
+    ),
+  );
+  assert(
+    traced.dom_changes.some(
+      (d) => d.attribute_name === "data-rea-content-action",
+    ),
+  );
+  assert(
+    !JSON.stringify(traced.dom_changes).includes("fixture-private-dom-value"),
+  );
+  check(
+    "Live MCP trace observes owned content-script execution, direct network initiator and concurrent DOM change without DOM values",
+  );
+  check(
+    "MAIN-world sourceURL spoof is excluded despite naming the selected extension",
+  );
+  const emptyTrace = await trace(
+    otherId,
+    async () => {
+      await webPage.locator("#rea-content-action").click();
+    },
+    "mcp-other-content-trace.json",
+    300,
+  );
+  assert(!emptyTrace.isError);
+  assert.deepEqual(reportOf(emptyTrace).normalized_result.contexts, []);
+  assert.deepEqual(reportOf(emptyTrace).normalized_result.scripts, []);
+  assert.deepEqual(reportOf(emptyTrace).normalized_result.requests, []);
+  check(
+    "Different extension ID cannot read or attribute the selected extension's content-script sources",
+  );
+  const cliTrace = await run(
+    process.execPath,
+    [
+      dispatcher,
+      "trace-chrome-extension-content-script",
+      endpoint,
+      id,
+      webTarget.id,
+      "--observation-ms",
+      "250",
+      "--json",
+    ],
+    { cwd: repo, timeout: 60000, maxBuffer: 32 * 1024 * 1024 },
+  );
+  const cliTraced = JSON.parse(cliTrace.stdout);
+  await writeFile(
+    join(out, "cli-content-trace.json"),
+    JSON.stringify(cliTraced, null, 2),
+  );
+  assert(cliTraced.normalized_result.contexts.length > 0);
+  check(
+    "Installed CLI shares the content-script tracing workflow and Evidence schema",
+  );
+  const navigated = await trace(
+    id,
+    async () => {
+      await webPage.reload();
+    },
+    "mcp-navigation-rejected.json",
+  );
+  assert(navigated.isError);
+  check(
+    "Same-URL page reload invalidates the trace rather than returning stale world attribution",
+  );
+  await webPage.waitForFunction(
+    () => document.documentElement.dataset.reaExtensionFixture === "loaded",
+  );
+  const cancellation = new AbortController();
+  await assert.rejects(
+    client.callTool(
+      {
+        name: "trace_chrome_extension_content_script",
+        arguments: {
+          cdp_endpoint: endpoint,
+          extension_id: id,
+          target_id: webTarget.id,
+          observation_ms: 30000,
+        },
+      },
+      {
+        signal: cancellation.signal,
+        onprogress: (progress) => {
+          if (progress.message?.includes("trace armed")) cancellation.abort();
+        },
+      },
+    ),
+  );
+  const recovered = await trace(
+    id,
+    async () => {},
+    "mcp-after-cancel.json",
+    250,
+  );
+  assert(!recovered.isError, JSON.stringify(recovered));
+  check(
+    "Cancellation releases instrumentation and a subsequent trace succeeds on the same page",
+  );
   await writeFile(
     join(out, "verification.json"),
     JSON.stringify(
@@ -192,5 +372,6 @@ try {
   await client?.close();
   await transport?.close();
   await browser?.close();
+  if (httpServer) await new Promise((resolve) => httpServer.close(resolve));
   await rm(profile, { recursive: true, force: true });
 }

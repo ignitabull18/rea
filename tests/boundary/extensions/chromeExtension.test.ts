@@ -103,6 +103,9 @@ describe("Chrome extension inspection at the shared public workflow", () => {
       { operation: "inspect_chrome_extension" },
     );
     const service = new ChromeExtensionService({
+      async traceContentScript() {
+        throw new Error("not used");
+      },
       async inspectPackage() {
         controller.abort();
         throw cleanup;

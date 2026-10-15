@@ -22,10 +22,37 @@ export const registerChromeExtensionCommands = (
   ) =>
     withCommandCancellation((signal) =>
       logCliCommand(logger, name, async () => {
-        const result = await service.execute(operation, input, { signal });
+        const result = await service.execute(operation, input, {
+          signal,
+          progress: {
+            report: async (update) => {
+              process.stderr.write(
+                `${JSON.stringify({ rea_progress: update })}\n`,
+              );
+            },
+          },
+        });
         return result.ok ? result.value : projectAnalysisError(result.error);
       }),
     );
+  cli.command(CLI_COMMANDS.traceChromeExtensionContentScript, {
+    description:
+      "Observe isolated-world content-script execution and webpage interactions",
+    args: z.object({
+      cdp_endpoint: z.string(),
+      extension_id: z.string(),
+      target_id: z.string(),
+    }),
+    options: z.object({
+      observationMs: z.number().int().min(250).max(30000).default(5000),
+    }),
+    run: ({ args, options }) =>
+      run(
+        CLI_COMMANDS.traceChromeExtensionContentScript,
+        "trace_chrome_extension_content_script",
+        { ...args, observation_ms: options.observationMs },
+      ),
+  });
   cli.command(CLI_COMMANDS.inspectChromeExtension, {
     description:
       "Inspect an unpacked extension, ZIP or CRX package without execution",

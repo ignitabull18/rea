@@ -53,6 +53,13 @@ const sessionEvidence = effects({ mutatesSession: true });
 
 /** Explicit effect audit for every public tool. */
 export const TOOL_EFFECTS: Readonly<Record<string, ToolEffects>> = {
+  trace_chrome_extension_content_script: effects({
+    mutatesTarget: true,
+    mutatesSession: true,
+    accessesNetwork: true,
+    mayDiscardData: true,
+    idempotent: false,
+  }),
   inspect_chrome_extension: evidence,
   list_chrome_extension_contexts: browserEvidence,
   inspect_chrome_extension_context: effects({

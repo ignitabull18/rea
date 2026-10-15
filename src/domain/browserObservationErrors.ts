@@ -1,5 +1,6 @@
 /** Public browser, Electron, Inspector, and scenario operations. */
 export type BrowserObservationOperation =
+  | "trace_chrome_extension_content_script"
   | "list_chrome_extension_contexts"
   | "inspect_chrome_extension_context"
   | "list_browser_targets"

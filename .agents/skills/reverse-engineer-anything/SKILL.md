@@ -2,7 +2,7 @@
 name: reverse-engineer-anything
 description: Reverse engineer native, managed, Electron/JavaScript, packaged, firmware, and browser targets with REA. Use shipped-artifact or requested runtime evidence to explain features, compare versions, decompile code, or guide a reconstruction. Skip REA for ordinary source-repository architecture analysis.
 metadata:
-  version: "43"
+  version: "44"
 ---
 
 # REA
@@ -85,7 +85,9 @@ software, including Node.js, npm, Homebrew, Java, Ghidra, IDA, JADX, Kuna, Binwa
 
 For an unpacked directory, ZIP or CRX package, use `inspect_chrome_extension` with its absolute `path`. It returns manifest declarations, entrypoints, file digests and syntactic API references. CRX signatures are not verified; static references do not prove execution.
 
-For an already-running operator-owned extension, use `list_chrome_extension_contexts` with a loopback `cdp_endpoint` and exact `extension_id`, then `inspect_chrome_extension_context` with a discovered `target_id`. It snapshots loaded worker/page JavaScript without evaluating code; attachment can affect worker lifetime. Website content-script isolated worlds are outside coverage. Empty discovery does not prove extension absence.
+For an already-running operator-owned extension, use `list_chrome_extension_contexts` with a loopback `cdp_endpoint` and exact `extension_id`, then `inspect_chrome_extension_context` with a discovered `target_id`. It snapshots loaded worker/page JavaScript without evaluating code; attachment can affect worker lifetime. Empty discovery does not prove extension absence.
+
+For live webpage interactions, call `trace_chrome_extension_content_script` with the exact webpage `target_id`, endpoint and extension ID. Choose `observation_ms` (250–30,000; default 5,000). Wait for armed progress, then trigger the action with separate browser controls. The tool observes main-frame isolated-world execution coverage, directly attributed request initiators, and concurrent DOM changes. DOM causality is unknown. MAIN-world injections, subframes and extension-worker traffic are outside coverage. Navigation/context loss fails closed; instrumentation can affect timing. No code is injected or evaluated by this tool.
 
 These tools belong to this local fork; follow actual advertised schemas. If absent from an active session, use the installed `rea` CLI or reconnect Codex.
 

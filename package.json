@@ -395,5 +395,5 @@
   "allowScripts": {
     "frida@17.23.2": true
   },
-  "reaLocalBuild": "chrome-extensions.1"
+  "reaLocalBuild": "chrome-extensions.2"
 }

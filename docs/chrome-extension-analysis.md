@@ -39,7 +39,22 @@ MCP tools:
 
 Discovery returns currently exposed extension page/background-page/service-worker targets. Dormant workers and closed popups can be absent; empty discovery is not proof an extension is uninstalled. Inspection verifies ownership, attaches Debugger, snapshots already-loaded extension-origin scripts, rechecks identity and disables/detaches its own connection. Anonymous, other-origin and WASM scripts are excluded and counted. It never calls `Runtime.evaluate` or reads storage.
 
-The snapshot has a 20-second deadline, 16 MiB source budget and 10,000-script budget, followed by independently bounded cleanup. Debugger attachment can change worker lifetime/timing. Source snapshots do not prove functions executed or messages/network requests occurred. Website content-script isolated worlds are outside live coverage; packaged content-script files are available statically.
+The snapshot has a 20-second deadline, 16 MiB source budget and 10,000-script budget, followed by independently bounded cleanup. Debugger attachment can change worker lifetime/timing. Source snapshots do not prove functions executed or messages/network requests occurred. This snapshot does not include website content-script worlds; use the live trace below for those.
+
+## Live content-script tracing
+
+```bash
+rea list-browser-targets http://127.0.0.1:9222 --json
+rea trace-chrome-extension-content-script http://127.0.0.1:9222 EXTENSION_ID WEBPAGE_TARGET_ID --observation-ms 5000 --json
+```
+
+MCP: `trace_chrome_extension_content_script` with `cdp_endpoint`, `extension_id`, webpage `target_id`, and optional `observation_ms` (250–30,000; default 5,000). Subscribe to MCP progress or read CLI progress on stderr. After **trace armed**, click/interact using separate browser controls. REA does not inject code, evaluate expressions, click or navigate.
+
+The report contains the exact main-document loader/frame identity, extension isolated-world identity, executed sources and SHA-256, nested function/block counts and UTF-16 ranges, and requests whose top synchronous initiator belongs to that world. Script URLs alone never establish ownership, so page `sourceURL` spoofing does not qualify. DOM change metadata is concurrent evidence with **unknown causality**; values/text/subtrees, request headers, cookies and bodies are not retained. URLs and query values remain evidence except transport credentials.
+
+This covers main-frame isolated worlds. MAIN-world injections, iframe/OOPIF scripts, workers, browser API calls, message payloads and asynchronous-only request attribution remain outside coverage. Zero observations do not prove absence. Navigation/reload, destroyed worlds and disconnects invalidate the trace. Precise coverage resets counters and affects JIT/timing on the instrumented connection. Coverage producer timestamps bound execution counters; wall-clock arm/end markers describe streamed observations with command latency.
+
+Bounds: 50-second overall deadline, 16 MiB source bytes, 8 MiB retained metadata, 10,000 protocol events, 16 MiB per CDP message and 32 MiB report. Cleanup has its own five-second deadline and visible failures. The fixture verification exercises execution, direct requests, DOM changes, spoof rejection, wrong extension ID, same-URL reload, cancellation/recovery, and CLI/MCP parity against an isolated real Chromium profile.
 
 ## Existing tools researched
 

@@ -9,6 +9,8 @@ import { createEvidence, type Evidence } from "../../domain/evidence.js";
 import { digestCanonicalValue } from "../../domain/canonicalDigest.js";
 import { err, ok, type Result } from "../../domain/result.js";
 import {
+  extensionContentTraceSchema,
+  traceChromeExtensionContentScriptInputSchema,
   chromeExtensionReportSchema,
   extensionContextListSchema,
   extensionContextInspectionSchema,
@@ -22,6 +24,7 @@ import { CHROME_EXTENSION_PROVIDER_IDENTITY } from "../../domain/extensions/chro
 
 const identity = CHROME_EXTENSION_PROVIDER_IDENTITY;
 export type ChromeExtensionOperation =
+  | "trace_chrome_extension_content_script"
   | "inspect_chrome_extension"
   | "list_chrome_extension_contexts"
   | "inspect_chrome_extension_context";
@@ -40,7 +43,22 @@ export class ChromeExtensionService {
         return err(new AnalysisCancelledError(operation));
       let report;
       let parameters;
-      if (operation === "inspect_chrome_extension") {
+      if (operation === "trace_chrome_extension_content_script") {
+        const parsed =
+          traceChromeExtensionContentScriptInputSchema.safeParse(rawInput);
+        if (!parsed.success)
+          return err(
+            analysisInputErrorFromIssues(
+              operation,
+              parsed.error.issues,
+              rawInput,
+            ),
+          );
+        parameters = parsed.data;
+        report = extensionContentTraceSchema.parse(
+          await this.provider.traceContentScript(parsed.data, options),
+        );
+      } else if (operation === "inspect_chrome_extension") {
         const parsed = inspectChromeExtensionInputSchema.safeParse(rawInput);
         if (!parsed.success)
           return err(

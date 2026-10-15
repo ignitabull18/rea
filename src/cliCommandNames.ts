@@ -60,6 +60,7 @@ export const CLI_COMMANDS = Object.freeze({
   inspectGoBinary: "inspect-go-binary",
   inspectChromeExtension: "inspect-chrome-extension",
   listChromeExtensionContexts: "list-chrome-extension-contexts",
+  traceChromeExtensionContentScript: "trace-chrome-extension-content-script",
   inspectChromeExtensionContext: "inspect-chrome-extension-context",
   inspectRustBinary: "inspect-rust-binary",
   inspectPeResources: "inspect-pe-resources",

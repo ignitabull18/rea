@@ -2,6 +2,8 @@ import type { ToolContract } from "../toolContractTypes.js";
 import { toolContractMetadata } from "../toolEffects.js";
 import { evidenceResultOf } from "../toolOutputSchemaPrimitives.js";
 import {
+  extensionContentTraceSchema,
+  traceChromeExtensionContentScriptInputSchema,
   chromeExtensionReportSchema,
   extensionContextListSchema,
   extensionContextInspectionSchema,
@@ -13,6 +15,26 @@ import {
 const id = "abcdefghijklmnopabcdefghijklmnop";
 /** Explicit local-package and exact-extension CDP scopes; no extension installation or target evaluation. */
 export const CHROME_EXTENSION_TOOL_CONTRACTS = [
+  {
+    name: "trace_chrome_extension_content_script",
+    ...toolContractMetadata("trace_chrome_extension_content_script"),
+    kind: "browser-provider",
+    description:
+      "Observe one extension's isolated-world content scripts in an exact HTTP(S) webpage target for 250–30,000 ms (default 5,000). Progress announces when armed; perform the webpage action using separate browser controls. Returns context-bound sources, SHA256 and precise function/block coverage, requests with a synchronous initiator script in that world, and concurrent DOM change metadata with unknown causality. Exact extension origin, isolated-world flag and main-frame ID establish ownership; script URLs alone never do. Does not evaluate or inject code, click, navigate, read request headers/bodies or retain DOM values. Profiler instrumentation affects timing/JIT. Main frame only; excludes MAIN-world injection, other extensions, workers, cross-frame requests and asynchronous-only attribution. Navigation/context replacement fails closed. Bounds: 16 MiB source bytes, 8 MiB retained metadata, 10,000 protocol events, 50-second overall deadline; cleanup errors remain visible.",
+    inputSchema: traceChromeExtensionContentScriptInputSchema,
+    outputSchema: evidenceResultOf(extensionContentTraceSchema),
+    examples: [
+      {
+        title: "Trace a content-script action on one webpage",
+        input: {
+          cdp_endpoint: "http://127.0.0.1:9222",
+          extension_id: id,
+          target_id: "webpage-target-id",
+          observation_ms: 5000,
+        },
+      },
+    ],
+  },
   {
     name: "inspect_chrome_extension",
     ...toolContractMetadata("inspect_chrome_extension"),

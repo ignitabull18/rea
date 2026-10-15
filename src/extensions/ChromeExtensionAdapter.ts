@@ -1,6 +1,7 @@
 import type { ChromeExtensionPort } from "../application/extensions/ChromeExtensionPort.js";
 import type { ExecutionOptions } from "../application/AnalysisProvider.js";
 import type {
+  TraceChromeExtensionContentScriptInput,
   InspectChromeExtensionInput,
   ListChromeExtensionContextsInput,
   InspectChromeExtensionContextInput,
@@ -10,6 +11,7 @@ import {
   inspectExtensionContext,
   listExtensionContexts,
 } from "./ChromeExtensionRuntime.js";
+import { traceExtensionContentScript } from "./ChromeExtensionTrace.js";
 import { extensionFailure } from "./ExtensionFailure.js";
 
 const guarded = async <T>(
@@ -26,6 +28,16 @@ const guarded = async <T>(
 
 /** Own package and CDP parsing and project failures before the application boundary. */
 export class ChromeExtensionAdapter implements ChromeExtensionPort {
+  traceContentScript(
+    input: TraceChromeExtensionContentScriptInput,
+    options?: ExecutionOptions,
+  ) {
+    return guarded(
+      "trace_chrome_extension_content_script",
+      options?.signal,
+      () => traceExtensionContentScript(input, options),
+    );
+  }
   inspectPackage(
     input: InspectChromeExtensionInput,
     options?: ExecutionOptions,
